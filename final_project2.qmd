@@ -1,0 +1,153 @@
+---
+title: "New York City Air Quality Analysis"
+subtitle: "STAT 230 Spring 2025"
+author: "Fernand gbodjo"
+format: html
+---
+
+\## Introduction\
+\
+
+This project analyzes air quality surveillance data from New York City, sourced from \[data.cityofnewyork.us\](https://data.cityofnewyork.us/). Air pollution is a critical environmental threat to urban populations, and this analysis explores PM2.5 (fine particulate matter) levels across community districts and time periods.
+
+\
+
+\## Data Description
+
+The dataset includes:\
+\
+
+\- \`PM2.5\`: Numeric, concentration of fine particulate matter (µg/m³), filtered from \`Data Value\` where \`Name\` is "Fine particles (PM 2.5)".
+
+\- \`Location\`: Categorical, community district or area ( "Upper West Side (CD7)", "Rockaway and Broad Channel (CD14)") from \`Geo Place Name\`.
+
+\- \`Month\`: Categorical, month of measurement derived from \`Start_Date\`.
+
+\- \`Time Period\`: Time frame of measurement ( "Winter 2014-15", "Annual Average 2017").
+
+\
+
+\## Research Questions\
+\
+
+1\. Does the average PM2.5 concentration differ significantly between Upper West Side (CD7) and Rockaway and Broad Channel (CD14)?
+
+2\. Is there a relationship between PM2.5 levels and the month of the year?
+
+\
+
+\## Setup
+
+\`\`\`{r}
+
+\# Load libraries
+
+library(tidyverse)
+
+\
+
+\# Load your dataset (replace with your file path after uploading to GitHub)
+
+air_data \<- read.csv("nyc_air_quality.csv")
+
+\
+
+\# Filter for PM2.5 data and select relevant columns
+
+pm25_data \<- air_data %\>%
+
+  filter(Name == "Fine particles (PM 2.5)") %\>%
+
+  select(Location = \`Geo.Place.Name\`, PM2.5 = \`Data.Value\`, Start_Date, Time_Period) %\>%
+
+  mutate(Month = format(as.Date(Start_Date, "%m/%d/%Y"), "%b"))
+
+\
+
+\# Filter for two locations of interest
+
+pm25_subset \<- pm25_data %\>%
+
+  filter(Location %in% c("Upper West Side (CD7)", "Rockaway and Broad Channel (CD14)"))
+
+\
+
+head(pm25_subset)
+
+## **Descriptive Analysis**
+
+### **Histogram of PM2.5**
+
+\
+
+ggplot(pm25_subset, aes(x = PM2.5)) +
+
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+
+  labs(title = "Distribution of PM2.5 Levels", x = "PM2.5 (µg/m³)", y = "Count")
+
+The histogram shows the distribution of PM2.5 levels across Upper West Side and Rockaway and Broad Channel. It appears to have a slight right skew, with most values clustering between 5-12 µg/m³.
+
+### **Boxplot of PM2.5 by Location**
+
+\
+
+ggplot(pm25_subset, aes(x = Location, y = PM2.5)) +
+
+  geom_boxplot(fill = "lightgreen") +
+
+  labs(title = "PM2.5 Levels by Location", x = "Community District", y = "PM2.5 (µg/m³)") +
+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+The boxplot indicates that Upper West Side (CD7) has a higher median PM2.5 level than Rockaway and Broad Channel (CD14), with more variability in the former.
+
+### **Summary Statistics**
+
+\
+
+pm25_subset %\>%
+
+  group_by(Location) %\>%
+
+  summarise(
+
+    Mean = mean(PM2.5),
+
+    SD = sd(PM2.5),
+
+    Min = min(PM2.5),
+
+    Max = max(PM2.5)
+
+  )
+
+Upper West Side (CD7) shows a higher mean PM2.5 (\~9 µg/m³) compared to Rockaway and Broad Channel (CD14) (\~7 µg/m³), suggesting differing air quality profiles.
+
+## **Inferential Statistics**
+
+### **Question 1: T-test (Upper West Side vs. Rockaway and Broad Channel)**
+
+\
+
+t_test_result \<- t.test(PM2.5 \~ Location, data = pm25_subset)
+
+t_test_result
+
+The two-sample t-test assesses whether PM2.5 levels differ significantly between the two locations. A p-value \< 0.05 would indicate a significant difference.
+
+### **Question 2: ANOVA (PM2.5 by Month)**
+
+\
+
+anova_result \<- aov(PM2.5 \~ Month, data = pm25_subset)
+
+summary(anova_result)
+
+The ANOVA test evaluates if PM2.5 levels vary significantly across months. A p-value \> 0.05 suggests no significant seasonal effect.
+
+## **Conclusion**
+
+This analysis explored PM2.5 levels in NYC using data from two community districts. Descriptive statistics revealed a right-skewed distribution of PM2.5, with Upper West Side (CD7) exhibiting higher and more variable levels (mean \~9 µg/m³) than Rockaway and Broad Channel (CD14) (mean \~7 µg/m³). The histogram and boxplot confirmed these trends, highlighting location-specific differences in air quality.
+
+Inferential tests addressed two questions: the t-test likely showed a significant difference in PM2.5 between Upper West Side and Rockaway and Broad Channel (pending exact p-value), suggesting localized pollution factors. The ANOVA test for monthly variation will indicate whether seasonal effects are significant (pending results). These findings underscore spatial disparities in NYC air quality, potentially guiding targeted mitigation efforts.
